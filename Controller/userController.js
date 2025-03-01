@@ -11,14 +11,14 @@ const generateToken = (userId) => {
 
 export const signup = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
 
     // Check if user already exists
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "Email already exists" });
 
     // Create new user
-    user = new User({ email, password });
+    user = new User({ email, username, password });
     await user.save();
 
     // Generate JWT token
@@ -26,7 +26,7 @@ export const signup = async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully",
-      user: { id: user._id, email: user.email },
+      user: { id: user._id, email: user.email, username: user.username },
       token,
     });
   } catch (error) {
