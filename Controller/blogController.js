@@ -56,30 +56,48 @@ export const updateBlog = async (req, res) => {
     const { id } = req.params;
     const { title, body, category } = req.body;
 
-    const updatedBlog = await Blog.findByIdAndUpdate(
-      id,
-      { title, body, category },
-      { new: true, runValidators: true } // Return updated document & apply schema validation
-    );
-
-    if (!updatedBlog) {
+    const blog = await Blog.findById(id);
+    if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Blog updated successfully", blog: updatedBlog });
+    // Check if the logged-in user is the creator of the blog
+    if (blog.author.toString() !== req.user.username.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this blog" });
+    }
+
+    // Perform update
+    blog.title = title;
+    blog.body = body;
+    blog.category = category;
+    await blog.save();
+
+    res.status(200).json({ message: "Blog updated successfully", blog });
   } catch (error) {
     console.error("Error updating blog:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export const deleteBlog = async (req, res) => {
   try {
-    const blog = await Blog.findByIdAndDelete(req.params.id);
-    if (!blog) return res.status(404).json({ message: "Post not found" });
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    // Check if the logged-in user is the creator of the blog
+    if (blog.author.toString() !== req.user.username.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this blog" });
+    }
+
+    await Blog.findByIdAndDelete(req.params.id);
     res.json({ message: "Blog deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
