@@ -64,3 +64,16 @@ export const login = async (req, res) => {
       .json({ message: "Internal server error", error: error.message });
   }
 };
+
+// Add to existing controller
+export const getMe = async (req, res) => {
+  try {
+    res.status(200).json({
+      id: req.user._id,
+      username: req.user.username,
+      email: req.user.email,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
